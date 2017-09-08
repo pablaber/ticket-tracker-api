@@ -6,7 +6,8 @@ scrape();
 
 function scrape() {
     if(!process.argv[3]) {
-        console.log("usage: node scrape <url> \"<venue>\"");
+        console.log("usage: node scrape <seatgeek page> \"<venue>\"");
+        console.log("example: node scrape new-york-rangers-tickets \"Madison Square Garden\"");
     }
     else {
         var page = process.argv[2];
