@@ -77,7 +77,7 @@ function getTodaysPrices(forUrl, forVenue) {
 
                     todaysPrices[gameid] = {
                         title: title,
-                        datetime: datetime,
+                        datetime: datetime.format("YYYY-MM-DD h:mm a"),
                         price: price
                     };
                 });
