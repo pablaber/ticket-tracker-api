@@ -36,7 +36,6 @@ function getTodaysPrices(forUrl, forVenue) {
 
                 var preseason = title.toLowerCase().indexOf('preseason') > -1;
 
-                // TODO pass as parameter
                 var atVenue = location.toLowerCase().indexOf(forVenue.toLowerCase()) > -1;
                 return (!preseason && atVenue);
             }).each(function() {
