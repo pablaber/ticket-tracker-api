@@ -1,6 +1,9 @@
 var request = require('request');
 var cheerio = require('cheerio');
 var moment = require('moment');
+var mongoose = require('mongoose');
+
+var Prices = require('./prices');
 
 scrape();
 
@@ -14,7 +17,9 @@ function scrape() {
         var venue = process.argv[3];
         var SEAT_GEEK = "https://seatgeek.com/";
         getTodaysPrices(SEAT_GEEK + page, venue).then(function(todaysPrices) {
-            console.log(todaysPrices);
+            updateDb(todaysPrices, page);
+        }, function(error) {
+            console.log(error);
         });
     }
 }
@@ -91,4 +96,23 @@ function getTodaysPrices(forUrl, forVenue) {
 
     });
 
+}
+
+function updateDb(todaysPrices, page) {
+    mongoose.connect('mongodb://localhost/ticket-tracker', {
+        useMongoClient: true
+    });
+    var db = mongoose.connection;
+    var priceCollection = Prices.getCollection(page);
+    var todaysKey = moment().format("YYYYMMDD");
+    var newEntry = {
+        dayOfScrape: todaysKey,
+        todaysPrices: todaysPrices
+    };
+
+    priceCollection.update({dayOfScrape: todaysKey}, newEntry, {upsert: true}, function(err, resp) {
+        console.log(resp);
+    });
+
+    db.close();
 }
