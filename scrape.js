@@ -48,7 +48,7 @@ function getTodaysPrices(forUrl, forVenue) {
                     var date = data.children('.event-listing-datetime').first()
                                    .children('.event-listing-date').first().text().trim();
 
-                    var duplicate = dates.includes(date);
+                    var duplicate = dates.indexOf(date) > -1;
 
                     if(!duplicate) {
                         dates.push(date);
