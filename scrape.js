@@ -5,9 +5,12 @@ var mongoose = require('mongoose');
 
 var Prices = require('./prices');
 
+var SEAT_GEEK = "https://seatgeek.com/";
+
 scrape();
 
 function scrape() {
+    validateParameters(process.argv);
     if(!process.argv[3]) {
         console.log("usage: node scrape <seatgeek page> \"<venue>\"");
         console.log("example: node scrape new-york-rangers-tickets \"Madison Square Garden\"");
@@ -15,7 +18,6 @@ function scrape() {
     else {
         var page = process.argv[2];
         var venue = process.argv[3];
-        var SEAT_GEEK = "https://seatgeek.com/";
         getTodaysPrices(SEAT_GEEK + page, venue).then(function(todaysPrices) {
             updateDb(todaysPrices, page);
         }, function(error) {
@@ -115,4 +117,20 @@ function updateDb(todaysPrices, page) {
     });
 
     db.close();
+}
+
+function validateParameters(parameters) {
+    console.log(process.argv);
+    var error = false;
+    var message = "";
+    if(process.argv.length !== 4 ) {
+       error = true;
+       message = "Invalid Parameters\n";
+       message += "Number of parameters is incorrect.\n";
+    }
+
+    message += "Usage: node scrape <seatgeek page> \"<venue>\""; 
+    if(error) {
+        throw new Error(message);
+    }
 }
