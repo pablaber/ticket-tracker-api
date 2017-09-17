@@ -18,12 +18,24 @@ module.exports.getCollection = function(name) {
 };
 
 /**
+ * Returns all the prices in the collection
+ * 
+ * @param {mongoose collection} collection
+ * @param {function} callback the callback function
+ * @returns {Object[]} a list of all prices in the collection 
+ */
+module.exports.getTicketPrices = function(collection, callback) {
+    return collection.find({}, callback);
+};
+
+/**
  * Returns the prices for the specified date in the specified collection
  * 
  * @param {mongoose collection} collection
  * @param {string} date in the form YYYYMMDD
- * @returns {Object[]} a list of games and their prices
+ * @param {function} callback the callback function
+ * @returns {Object} the list of prices for the given date
  */
-module.exports.getTicketPrices = function(collection, date, callback) {
+module.exports.getTicketPricesForDate = function(collection, date, callback) {
     return collection.findOne({dayOfScrape: date}, callback);
 };
