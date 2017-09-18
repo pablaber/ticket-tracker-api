@@ -120,7 +120,6 @@ function updateDb(todaysPrices, page) {
 }
 
 function validateParameters(parameters) {
-    console.log(process.argv);
     var error = false;
     var message = "";
     if(process.argv.length !== 4 ) {
