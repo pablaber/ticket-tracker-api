@@ -1,4 +1,3 @@
-var mongoose = require('mongoose');
 var moment = require('moment');
 
 const { Pool, Client } = require('pg');
@@ -121,16 +120,11 @@ module.exports.insertPrices = function(priceArray) {
 //     {scrapeTime: moment(), gameTime: moment(), homeTeam: "STL", awayTeam: "PIT", price: 250 }    
 // ]);
 
-this.getPrices({
-    // scrapeTime: moment()
-    // gameTime: moment()
-    homeTeam: "NYR",
-    awayTeam: "NYI"
-}).then(function(res) {
-    console.log(res);
-});
-
-// var pricesSchema = mongoose.Schema({
-//     dayOfScrape: String,
-//     todaysPrices: {}
+// this.getPrices({
+//     // scrapeTime: moment()
+//     // gameTime: moment()
+//     homeTeam: "NYR",
+//     awayTeam: "NYI"
+// }).then(function(res) {
+//     console.log(res);
 // });
