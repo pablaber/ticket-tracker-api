@@ -107,20 +107,31 @@ BEGIN
 RETURN; 
 END; 
 $$ LANGUAGE plpgsql;
- 
-CREATE TYPE typ_price AS (
-	scrape_time timestamp,
-  	game_time timestamp,
-  	home_team varchar(3),
-  	away_team varchar(3),
-  	price integer
-);
 
-CREATE FUNCTION insert_prices (typ_price[]) 
+DROP TYPE typ_price;
+
+DROP FUNCTION insert_price(typ_price);
+
+CREATE OR REPLACE FUNCTION insert_price (st timestamp, gt timestamp, home varchar(3), away varchar(3), pr integer) 
 RETURNS void AS $$
 BEGIN
 	INSERT INTO PRICES (scrape_time, game_time, home_team, away_team, price)
-    SELECT scrape_time, game_time, home_team, away_team, price
-    FROM UNNEST($1);
+    VALUES (st, gt, home, away, pr);
 END;
 $$ LANGUAGE plpgsql;
+
+-- QUERIES
+
+select * from prices;
+
+delete from prices where home_team = 'STL';
+
+select * from prices_for_game('2017-10-20 19:30:00', 'NYR', 'PIT');
+ 
+select * from prices_for_game('2017-10-20 19:30:00', 'NYR');
+ 
+select * from prices_for_scrape('2017-10-20 12:00:00');
+ 
+select * from current_prices_for_team('NYR');
+ 
+select * from current_prices_for_day('2017-10-22 12:31:22');

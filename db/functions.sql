@@ -1,5 +1,5 @@
 -- prices over time for an exact game (with home and away teams specified)
-CREATE FUNCTION prices_for_game (gt timestamp, home varchar(3), away varchar(3)) 
+CREATE OR REPLACE FUNCTION prices_for_game (gt timestamp, home varchar(3), away varchar(3)) 
 RETURNS setof prices AS $$
 BEGIN 
 	RETURN QUERY 
@@ -13,7 +13,7 @@ END;
 $$ LANGUAGE plpgsql;
  
 -- prices over time for an exact game (with one team specified)
-CREATE FUNCTION prices_for_game (gt timestamp, team varchar(3)) 
+CREATE OR REPLACE FUNCTION prices_for_game (gt timestamp, team varchar(3)) 
 RETURNS setof prices AS $$ 
 BEGIN 
 	RETURN QUERY 
@@ -26,7 +26,7 @@ END;
 $$ LANGUAGE plpgsql;
  
 -- gives all the prices for a specific scrape
-CREATE FUNCTION prices_for_scrape (st timestamp) 
+CREATE OR REPLACE FUNCTION prices_for_scrape (st timestamp) 
 RETURNS setof prices AS $$ 
 BEGIN 
 	RETURN QUERY 
@@ -38,7 +38,7 @@ END;
 $$ LANGUAGE plpgsql;
  
 -- gives the latest price of all of a teams games
-CREATE FUNCTION current_prices_for_team (team varchar(3)) 
+CREATE OR REPLACE FUNCTION current_prices_for_team (team varchar(3)) 
 RETURNS setof prices AS $$ 
 BEGIN 
 	RETURN QUERY 
@@ -55,7 +55,7 @@ BEGIN
 $$ LANGUAGE plpgsql;
  
 -- gives the latest price for all games on a specific day
-CREATE FUNCTION current_prices_for_day (gt timestamp) 
+CREATE OR REPLACE FUNCTION current_prices_for_day (gt timestamp) 
 RETURNS setof prices AS $$ 
 BEGIN 
 	RETURN QUERY SELECT * FROM prices p1 
@@ -70,12 +70,11 @@ RETURN;
 END; 
 $$ LANGUAGE plpgsql;
 
--- inserts multiple rows into the prices table
-CREATE FUNCTION insert_prices (typ_price[]) 
+-- inserts row into the prices table
+CREATE OR REPLACE FUNCTION insert_price (st timestamp, gt timestamp, home varchar(3), away varchar(3), pr integer) 
 RETURNS void AS $$
 BEGIN
 	INSERT INTO PRICES (scrape_time, game_time, home_team, away_team, price)
-    SELECT scrape_time, game_time, home_team, away_team, price
-    FROM UNNEST($1);
+    VALUES (st, gt, home, away, pr);
 END;
 $$ LANGUAGE plpgsql;

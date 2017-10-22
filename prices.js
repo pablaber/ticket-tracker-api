@@ -12,6 +12,7 @@ const PRICES_FOR_GAME_ONE       = "SELECT * FROM prices_for_game($1, $2)";
 const PRICES_FOR_SCRAPE         = "SELECT * FROM prices_for_scrape($1)";
 const CURRENT_PRICES_FOR_TEAM   = "SELECT * FROM current_prices_for_team($1)";
 const CURRENT_PRICES_FOR_DAY    = "SELECT * FROM current_prices_for_day($1)";
+const INSERT_PRICES             = "SELECT insert_price($1, $2, $3, $4, $5)";
 
 module.exports.pricesForGame = function(gameTime, homeTeam, awayTeam) {
     return new Promise(function(resolve, reject) {
@@ -93,41 +94,20 @@ module.exports.currentPricesForDay = function (gameTime) {
     });
 };
 
-/**
- * Inserts multiple prices into the price database.
- * The priceArray is an array of objects similar to the object from getPrices:
- * 
- *      scrapeTime  moment    the day of the scrape
- *      gameTime    moment    the day of the game
- *      homeTeam    string    the home team abbreviation
- *      awayTeam    string    the away team abbreviation
- *      price       integer   the price of the game
- * 
- * All of these conditions are mandatory for each row that is to be inserted.
- */
-module.exports.insertPrices = function(priceArray) {
+module.exports.insertPrice = function(scrapeTime, gameTime, homeTeam, awayTeam, price) {
     return new Promise(function(resolve, reject) {
-        var query = "INSERT INTO prices (scrape_time, game_time, home_team, away_team, price) VALUES\n";
-        var i = 0;
-        for(var priceObj of priceArray) {
-            i++;
-            var params = [
-                "'" + priceObj.scrapeTime.format("YYYY-MM-DD hh:mm:ss") + "'",
-                "'" + priceObj.gameTime.format("YYYY-MM-DD hh:mm:ss") + "'",
-                "'" + priceObj.homeTeam + "'",
-                "'" + priceObj.awayTeam + "'",
-                priceObj.price
-            ];
-            query += "( " + params.join(', ') + " )";
-            if(i != priceArray.length) {
-                query += ",\n";
-            }
-            
-        }
-        prices.query(query)
+        var query = INSERT_PRICES;
+        var params = [
+            scrapeTime.format("YYYY-MM-DD HH:mm:ss"),
+            gameTime.format("YYYY-MM-DD HH:mm:ss"),
+            homeTeam,
+            awayTeam,
+            price
+        ];
+        prices.query(query, params)
             .then(function (res) {
                 prices.end();
-                resolve(res.rows);
+                resolve(res);
             })
             .catch(function (error) {
                 prices.end();
@@ -137,15 +117,17 @@ module.exports.insertPrices = function(priceArray) {
     });
 };
 
-var gameDate = moment('2017-10-22 12:31:22', "YYYY-MM-DD HH:mm:ss");
-this.currentPricesForDay(gameDate).then(function(res) {
-    console.log(res);
-});
+// var gameDate = moment('2017-10-22 12:31:22', "YYYY-MM-DD HH:mm:ss");
+// this.currentPricesForDay(gameDate).then(function(res) {
+//     console.log(res);
+// });
 
-// this.insertPrices([
-//     {scrapeTime: moment(), gameTime: moment(), homeTeam: "NYR", awayTeam: "NYI", price: 200},
-//     {scrapeTime: moment(), gameTime: moment(), homeTeam: "STL", awayTeam: "PIT", price: 250 }    
-// ]);
+// var gameTime = moment('2017-10-20 19:30:00', "YYYY-MM-DD HH:mm:ss");
+// this.insertPrice(
+//     moment("2017-10-20 12:00:00", "YYYY-MM-DD HH:mm:ss"), gameTime, "STL", "PIT", 200 
+// ).catch(function(error) {
+//     console.log(error);
+// });
 
 // this.getPrices({
 //     // scrapeTime: moment()
