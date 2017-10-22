@@ -108,3 +108,19 @@ RETURN;
 END; 
 $$ LANGUAGE plpgsql;
  
+CREATE TYPE typ_price AS (
+	scrape_time timestamp,
+  	game_time timestamp,
+  	home_team varchar(3),
+  	away_team varchar(3),
+  	price integer
+);
+
+CREATE FUNCTION insert_prices (typ_price[]) 
+RETURNS void AS $$
+BEGIN
+	INSERT INTO PRICES (scrape_time, game_time, home_team, away_team, price)
+    SELECT scrape_time, game_time, home_team, away_team, price
+    FROM UNNEST($1);
+END;
+$$ LANGUAGE plpgsql;

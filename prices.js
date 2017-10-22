@@ -6,58 +6,17 @@ const { Pool, Client } = require('pg');
 // for connection information
 const prices = new Pool();
 
-/**
- * Returns the queried database entries based off of the options given.
- * The options object contains the follwing keys:
- * 
- *      scrapeTime  moment - the day of the scrape
- *      gameTime    moment - the day of the game
- *      homeTeam    string - the home team abbreviation
- *      awayTeam    string - the away team abbreviation
- * 
- * Each of these conditions is optional, but when included it will be
- * logically AND'ed together with the other parameters to narrow down the
- * results.
- * 
- * @param {Object} options the options object (see above)
- * @returns {Object[]} the rows of the result in an array
- */
-module.exports.getPrices = function(options) {
+// stored functions
+const PRICES_FOR_GAME_TWO       = "SELECT * FROM prices_for_game($1, $2, $3)";
+const PRICES_FOR_GAME_ONE       = "SELECT * FROM prices_for_game($1, $2)";
+const PRICES_FOR_SCRAPE         = "SELECT * FROM prices_for_scrape($1)";
+const CURRENT_PRICES_FOR_TEAM   = "SELECT * FROM current_prices_for_team($1)";
+const CURRENT_PRICES_FOR_DAY    = "SELECT * FROM current_prices_for_day($1)";
+
+module.exports.pricesForGame = function(gameTime, homeTeam, awayTeam) {
     return new Promise(function(resolve, reject) {
-        var params = [];
-        var query = "SELECT * FROM PRICES\n";
-        var i = 0;
-        for(var key of Object.keys(options)) {
-            if(i == 0) {
-                query += "WHERE ";
-                i++;
-            }
-            else {
-                query += "AND ";
-                i++;
-            }
-            switch(key) {
-                case "scrapeTime":
-                    query += "scrape_time > $" + i + "::date\n";
-                    query += "AND scrape_time < $" + i + "::date + interval '1 day'\n";
-                    params.push(options[key].format("YYYY-MM-DD hh:mm:ss"));
-                    break;
-                case "gameTime":
-                    query += "game_time > $" + i + "::date\n";
-                    query += "AND game_time < $" + i + "::date + interval '1 day'\n";
-                    params.push(options[key].format("YYYY-MM-DD hh:mm:ss"));
-                    break;
-                case "homeTeam":
-                    query += "home_team = $" + i + "\n";
-                    params.push(options[key]);
-                    break;
-                case "awayTeam":
-                    query += "away_team = $" + i + "\n";
-                    params.push(options[key]);
-                    break;
-            }
-            
-        }
+        var query = PRICES_FOR_GAME_TWO;
+        var params = [gameTime.format("YYYY-MM-DD HH:mm:ss"), homeTeam, awayTeam];
         prices.query(query, params)
             .then(function (res) {
                 prices.end();
@@ -67,7 +26,70 @@ module.exports.getPrices = function(options) {
                 prices.end();
                 reject(error);
             });
-        
+    });
+};
+
+module.exports.pricesForGame = function(gameTime, team) {
+    return new Promise(function (resolve, reject) {
+        var query = PRICES_FOR_GAME_ONE;
+        var params = [gameTime.format("YYYY-MM-DD HH:mm:ss"), team];
+        prices.query(query, params)
+            .then(function (res) {
+                prices.end();
+                resolve(res.rows);
+            })
+            .catch(function (error) {
+                prices.end();
+                reject(error);
+            });
+    });
+};
+
+module.exports.pricesForScrape = function(scrapeTime) {
+    return new Promise(function (resolve, reject) {
+        var query = PRICES_FOR_SCRAPE;
+        var params = [scrapeTime.format("YYYY-MM-DD HH:mm:ss")];
+        prices.query(query, params)
+            .then(function (res) {
+                prices.end();
+                resolve(res.rows);
+            })
+            .catch(function (error) {
+                prices.end();
+                reject(error);
+            });
+    });
+};
+
+module.exports.currentPricesForTeam = function(team) {
+    return new Promise(function (resolve, reject) {
+        var query = CURRENT_PRICES_FOR_TEAM;
+        var params = [team];
+        prices.query(query, params)
+            .then(function (res) {
+                prices.end();
+                resolve(res.rows);
+            })
+            .catch(function (error) {
+                prices.end();
+                reject(error);
+            });
+    });
+};
+
+module.exports.currentPricesForDay = function (gameTime) {
+    return new Promise(function (resolve, reject) {
+        var query = CURRENT_PRICES_FOR_DAY;
+        var params = [gameTime.format("YYYY-MM-DD HH:mm:ss")];
+        prices.query(query, params)
+            .then(function (res) {
+                prices.end();
+                resolve(res.rows);
+            })
+            .catch(function (error) {
+                prices.end();
+                reject(error);
+            });
     });
 };
 
@@ -114,6 +136,11 @@ module.exports.insertPrices = function(priceArray) {
 
     });
 };
+
+var gameDate = moment('2017-10-22 12:31:22', "YYYY-MM-DD HH:mm:ss");
+this.currentPricesForDay(gameDate).then(function(res) {
+    console.log(res);
+});
 
 // this.insertPrices([
 //     {scrapeTime: moment(), gameTime: moment(), homeTeam: "NYR", awayTeam: "NYI", price: 200},
