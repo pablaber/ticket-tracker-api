@@ -1,10 +1,18 @@
 var moment = require('moment');
 
+require('dotenv').config();
+
 const { Pool, Client } = require('pg');
 
 // pools will use environment variables
 // for connection information
-const prices = new Pool();
+const prices = new Pool({
+    user: process.env.PSQL_USER,
+    host: process.env.PSQL_HOST,
+    database: process.env.PSQL_DB,
+    password: process.env.PSQL_PASS,
+    port: process.env.PSQL_PORT
+});
 
 // stored functions
 const PRICES_FOR_GAME_TWO       = "SELECT * FROM prices_for_game($1, $2, $3)";

@@ -18,6 +18,7 @@
   "homepage": "https://github.com/pablaber/ticket-tracker#readme",
   "dependencies": {
     "cheerio": "^1.0.0-rc.2",
+    "dotenv": "^4.0.0",
     "moment": "^2.18.1",
     "mongoose": "^4.11.10",
     "pg": "^7.3.0",
