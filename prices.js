@@ -1,41 +1,142 @@
-var mongoose = require('mongoose');
 var moment = require('moment');
 
-var pricesSchema = mongoose.Schema({
-    dayOfScrape: String,
-    todaysPrices: {}
-});
+const { Pool, Client } = require('pg');
 
-/**
- * Returns the mongoose collection with the given name
- * 
- * @param {string} name the name of the model
- * @returns {mongoose collection} the mongoose collection with the specified name
- */
-module.exports.getCollection = function(name) {
-    pricesSchema.set('collection', name);
-    return mongoose.model(name, pricesSchema);
+// pools will use environment variables
+// for connection information
+const prices = new Pool();
+
+// stored functions
+const PRICES_FOR_GAME_TWO       = "SELECT * FROM prices_for_game($1, $2, $3)";
+const PRICES_FOR_GAME_ONE       = "SELECT * FROM prices_for_game($1, $2)";
+const PRICES_FOR_SCRAPE         = "SELECT * FROM prices_for_scrape($1)";
+const CURRENT_PRICES_FOR_TEAM   = "SELECT * FROM current_prices_for_team($1)";
+const CURRENT_PRICES_FOR_DAY    = "SELECT * FROM current_prices_for_day($1)";
+const INSERT_PRICES             = "SELECT insert_price($1, $2, $3, $4, $5)";
+
+module.exports.pricesForGame = function(gameTime, homeTeam, awayTeam) {
+    return new Promise(function(resolve, reject) {
+        var query = PRICES_FOR_GAME_TWO;
+        var params = [gameTime.format("YYYY-MM-DD HH:mm:ss"), homeTeam, awayTeam];
+        prices.query(query, params)
+            .then(function (res) {
+                prices.end();
+                resolve(res.rows);
+            })
+            .catch(function (error) {
+                prices.end();
+                reject(error);
+            });
+    });
 };
 
-/**
- * Returns all the prices in the collection
- * 
- * @param {mongoose collection} collection
- * @param {function} callback the callback function
- * @returns {Object[]} a list of all prices in the collection 
- */
-module.exports.getTicketPrices = function(collection, callback) {
-    return collection.find({}, callback);
+module.exports.pricesForGame = function(gameTime, team) {
+    return new Promise(function (resolve, reject) {
+        var query = PRICES_FOR_GAME_ONE;
+        var params = [gameTime.format("YYYY-MM-DD HH:mm:ss"), team];
+        prices.query(query, params)
+            .then(function (res) {
+                prices.end();
+                resolve(res.rows);
+            })
+            .catch(function (error) {
+                prices.end();
+                reject(error);
+            });
+    });
 };
 
-/**
- * Returns the prices for the specified date in the specified collection
- * 
- * @param {mongoose collection} collection
- * @param {string} date in the form YYYYMMDD
- * @param {function} callback the callback function
- * @returns {Object} the list of prices for the given date
- */
-module.exports.getTicketPricesForDate = function(collection, date, callback) {
-    return collection.findOne({dayOfScrape: date}, callback);
+module.exports.pricesForScrape = function(scrapeTime) {
+    return new Promise(function (resolve, reject) {
+        var query = PRICES_FOR_SCRAPE;
+        var params = [scrapeTime.format("YYYY-MM-DD HH:mm:ss")];
+        prices.query(query, params)
+            .then(function (res) {
+                prices.end();
+                resolve(res.rows);
+            })
+            .catch(function (error) {
+                prices.end();
+                reject(error);
+            });
+    });
 };
+
+module.exports.currentPricesForTeam = function(team) {
+    return new Promise(function (resolve, reject) {
+        var query = CURRENT_PRICES_FOR_TEAM;
+        var params = [team];
+        prices.query(query, params)
+            .then(function (res) {
+                prices.end();
+                resolve(res.rows);
+            })
+            .catch(function (error) {
+                prices.end();
+                reject(error);
+            });
+    });
+};
+
+module.exports.currentPricesForDay = function (gameTime) {
+    return new Promise(function (resolve, reject) {
+        var query = CURRENT_PRICES_FOR_DAY;
+        var params = [gameTime.format("YYYY-MM-DD HH:mm:ss")];
+        prices.query(query, params)
+            .then(function (res) {
+                prices.end();
+                resolve(res.rows);
+            })
+            .catch(function (error) {
+                prices.end();
+                reject(error);
+            });
+    });
+};
+
+module.exports.insertPrice = function(scrapeTime, gameTime, homeTeam, awayTeam, price) {
+    return new Promise(function(resolve, reject) {
+        var query = INSERT_PRICES;
+        var params = [
+            scrapeTime.format("YYYY-MM-DD HH:mm:ss"),
+            gameTime.format("YYYY-MM-DD HH:mm:ss"),
+            homeTeam,
+            awayTeam,
+            price
+        ];
+        prices.query(query, params)
+            .then(function (res) {
+                // prices.end();
+                resolve(res);
+            })
+            .catch(function (error) {
+                prices.end();
+                reject(error);
+            });
+
+    });
+};
+
+module.exports.endPool = function() {
+    prices.end();
+};
+// var gameDate = moment('2017-10-22 12:31:22', "YYYY-MM-DD HH:mm:ss");
+// this.currentPricesForDay(gameDate).then(function(res) {
+//     console.log(res);
+// });
+
+// var gameTime = moment('2017-10-20 19:30:00', "YYYY-MM-DD HH:mm:ss");
+// this.insertPrice(
+//     moment("2017-10-20 12:00:00", "YYYY-MM-DD HH:mm:ss"), gameTime, "STL", "PIT", 200 
+// ).catch(function(error) {
+//     console.log(error);
+// });
+
+// this.getPrices({
+//     // scrapeTime: moment()
+//     // gameTime: moment()
+//     homeTeam: "NYR",
+//     awayTeam: "NYI"
+// }).then(function(res) {
+//     console.log(res);
+// });
