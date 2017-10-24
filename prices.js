@@ -106,7 +106,7 @@ module.exports.insertPrice = function(scrapeTime, gameTime, homeTeam, awayTeam, 
         ];
         prices.query(query, params)
             .then(function (res) {
-                prices.end();
+                // prices.end();
                 resolve(res);
             })
             .catch(function (error) {
@@ -117,6 +117,9 @@ module.exports.insertPrice = function(scrapeTime, gameTime, homeTeam, awayTeam, 
     });
 };
 
+module.exports.endPool = function() {
+    prices.end();
+};
 // var gameDate = moment('2017-10-22 12:31:22', "YYYY-MM-DD HH:mm:ss");
 // this.currentPricesForDay(gameDate).then(function(res) {
 //     console.log(res);

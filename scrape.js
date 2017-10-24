@@ -4,6 +4,7 @@ var moment = require('moment');
 var mongoose = require('mongoose');
 
 var Prices = require('./prices');
+var Teams = require('./teamAbbreviations');
 
 var SEAT_GEEK = "https://seatgeek.com/";
 
@@ -11,22 +12,21 @@ scrape();
 
 function scrape() {
     validateParameters(process.argv);
-    if(!process.argv[3]) {
-        console.log("usage: node scrape <seatgeek page> \"<venue>\"");
-        console.log("example: node scrape new-york-rangers-tickets \"Madison Square Garden\"");
+    if(!process.argv[2]) {
+        console.log("usage: node scrape <seatgeek page>");
+        console.log("example: node scrape new-york-rangers-tickets");
     }
     else {
         var page = process.argv[2];
-        var venue = process.argv[3];
-        getTodaysPrices(SEAT_GEEK + page, venue).then(function(todaysPrices) {
-            updateDb(todaysPrices, page);
+        getTodaysPrices(SEAT_GEEK + page).then(function(todaysPrices) {
+            updateDb(todaysPrices);
         }, function(error) {
             console.log(error);
         });
     }
 }
 
-function getTodaysPrices(forUrl, forVenue) {
+function getTodaysPrices(forUrl) {
     return new Promise(function(resolve, reject) {
         var todaysPrices = {};
 
@@ -34,65 +34,56 @@ function getTodaysPrices(forUrl, forVenue) {
             if(!error) {
                 var $ = cheerio.load(html);
 
-                var dates = [];
-                $('.page-event-listing').filter(function() {
-                    var data = $(this);
-                    var title = data.children('.event-listing-details').first()
-                                    .children('.event-listing-title').first()
-                                    .children().first().text().trim();
+                var pages = [forUrl];
+                $('ul.pagination-list').children()
+                    .not('.paging-first')
+                    .not('.next-template')
+                    .children().each(function() {
+                        pages.push($(this).attr("href"));
+                    });
 
-                    var location = data.children('.event-listing-details').first()
-                                       .children('.event-listing-location').first()
-                                       .children('.event-listing-location-text').first()
-                                       .children('.event-listing-venue-link').first()
-                                       .children().first().text().trim();
+                var scrapedPages = 0;
+                var prices = new Array(pages.length).fill([]);
+                for(let i in pages) {
+                    request(pages[i], function(e, r, h) {
+                        if(!e) {
+                            var $ = cheerio.load(h);
 
-                    var date = data.children('.event-listing-datetime').first()
-                                   .children('.event-listing-date').first().text().trim();
+                            $(".page-event-listing").each(function() {
+                                var datetimeString = $(this).children(".event-listing-datetime").first()
+                                    .children(".event-listing-time").first().attr("datetime").split("T").join(" ");
+                                var gameTime = moment(datetimeString, "YYYY-MM-DD HH:mm");
+                                var titleString = $(this).children(".event-listing-details").first()
+                                    .children(".event-listing-title").first().children().first().text();
+                                var teams = titleString.split(" at ");
+                                var awayTeam = Teams.abbreviations[teams[0].trim()];
+                                var homeTeam = Teams.abbreviations[teams[1].trim()];
+                                var price = parseInt($(this).children('.event-listing-button').first().text().trim().substring(6));
+                                var uniqueKey = datetimeString + awayTeam + homeTeam;
+                                var toInsert = {
+                                    uniqueKey: uniqueKey,
+                                    gameTime: gameTime,
+                                    awayTeam: awayTeam,
+                                    homeTeam: homeTeam,
+                                    price: price
+                                };
+                                prices[i].push(toInsert);
 
-                    var duplicate = dates.indexOf(date) > -1;
+                            });
 
-                    if(!duplicate) {
-                        dates.push(date);
-                    }
-
-                    var preseason = title.toLowerCase().indexOf('preseason') > -1;
-
-                    var atVenue = location.toLowerCase().indexOf(forVenue.toLowerCase()) > -1;
-                    return (!preseason && atVenue && !duplicate);
-                }).each(function() {
-                    var data = $(this);
-                    var title = data.children('.event-listing-details').first()
-                                    .children('.event-listing-title').first()
-                                    .children().first().text().trim();
-
-                    var date = data.children('.event-listing-datetime').first()
-                                   .children('.event-listing-date').first().text().trim().replace(/ +(?= )/g,'');
-
-                    var time = data.children('.event-listing-datetime').first()
-                                   .children('.event-listing-time').first().text().trim().replace(/ +(?= )/g,'');
-
-                    var price = parseInt(data.children('.event-listing-button').first().text().trim().substring(6));
-
-                    var datetime = moment(date + " " + time, "MMM D ddd h:mm a");
-
-                    if(datetime.diff(moment()) < 0) {
-                        datetime.add(1, 'years');
-                    }
-
-                    var gameid = datetime.format("YYYYMMDD");
-
-                    todaysPrices[gameid] = {
-                        title: title,
-                        datetime: datetime.format("YYYY-MM-DD h:mm a"),
-                        price: price
-                    };
-                });
-
-                resolve(todaysPrices);
+                            scrapedPages++;
+                            if(scrapedPages === pages.length) {
+                                resolve(prices);
+                            }
+                        }
+                        else {
+                            reject("Error in pagination URL");
+                        }
+                    });
+                }
             }
             else {
-                reject(-1);
+                reject("Error in input URL");
             }
         });
 
@@ -100,35 +91,43 @@ function getTodaysPrices(forUrl, forVenue) {
 
 }
 
-function updateDb(todaysPrices, page) {
-    mongoose.connect('mongodb://localhost/ticket-tracker', {
-        useMongoClient: true
-    });
-    var db = mongoose.connection;
-    var priceCollection = Prices.getCollection(page);
-    var todaysKey = moment().format("YYYYMMDD");
-    var newEntry = {
-        dayOfScrape: todaysKey,
-        todaysPrices: todaysPrices
-    };
-
-    priceCollection.update({dayOfScrape: todaysKey}, newEntry, {upsert: true}, function(err, resp) {
-        console.log(resp);
-    });
-
-    db.close();
+function updateDb(todaysPrices) {
+    var scrapeTime = moment();
+    var uniqueKeys = [];
+    var uniquePrices = [];
+    for(let i in todaysPrices) {
+        for(let j in todaysPrices[i]) {
+            var todaysPrice = todaysPrices[i][j];
+            if(uniqueKeys.indexOf(todaysPrice.uniqueKey) === -1) {
+                uniqueKeys.push(todaysPrice.uniqueKey);
+                uniquePrices.push(todaysPrice);
+            }
+        }
+    }
+    var pricesUploaded = 0;
+    for(var uniquePrice of uniquePrices) {
+        
+        Prices.insertPrice(scrapeTime, uniquePrice.gameTime, uniquePrice.homeTeam, uniquePrice.awayTeam, uniquePrice.price).then(function() {
+            pricesUploaded++;
+            if(pricesUploaded === uniquePrices.length) {
+                Prices.endPool();
+            }
+        }).catch(function(error) {
+            console.log(error);
+        });
+    }
 }
 
 function validateParameters(parameters) {
     var error = false;
     var message = "";
-    if(process.argv.length !== 4 ) {
+    if(process.argv.length !== 3 ) {
        error = true;
        message = "Invalid Parameters\n";
        message += "Number of parameters is incorrect.\n";
     }
 
-    message += "Usage: node scrape <seatgeek page> \"<venue>\""; 
+    message += "Usage: node scrape <seatgeek page>"; 
     if(error) {
         throw new Error(message);
     }

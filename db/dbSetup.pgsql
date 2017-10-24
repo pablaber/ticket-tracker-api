@@ -122,7 +122,6 @@ $$ LANGUAGE plpgsql;
 
 -- QUERIES
 
-select * from prices;
 
 delete from prices where home_team = 'STL';
 
