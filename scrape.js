@@ -4,6 +4,7 @@ var moment = require('moment');
 var mongoose = require('mongoose');
 
 var Prices = require('./prices');
+var Logger = require('./logger');
 var Teams = require('./teamAbbreviations');
 
 var SEAT_GEEK = "https://seatgeek.com/";
@@ -11,7 +12,7 @@ var SEAT_GEEK = "https://seatgeek.com/";
 scrape();
 
 function scrape() {
-    console.log("beginning scrape...");
+    Logger.logMessage("Starting scrape");
     validateParameters(process.argv);
     if(!process.argv[2]) {
         console.log("usage: node scrape <seatgeek page>");
@@ -28,6 +29,7 @@ function scrape() {
 }
 
 function getTodaysPrices(forUrl) {
+    Logger.logMessage("Getting prices for url: " + forUrl);
     return new Promise(function(resolve, reject) {
         var todaysPrices = {};
 
@@ -74,16 +76,19 @@ function getTodaysPrices(forUrl) {
 
                             scrapedPages++;
                             if(scrapedPages === pages.length) {
+                                Logger.logMessage("Finished getting prices for url: " + forUrl);
                                 resolve(prices);
                             }
                         }
                         else {
+                            Logger.logMessage("Error in pagination URL");
                             reject("Error in pagination URL");
                         }
                     });
                 }
             }
             else {
+                Logger.logMessage("Error in input URL");
                 reject("Error in input URL");
             }
         });
@@ -93,6 +98,7 @@ function getTodaysPrices(forUrl) {
 }
 
 function updateDb(todaysPrices) {
+    Logger.logMessage("Updating database");
     var scrapeTime = moment();
     var uniqueKeys = [];
     var uniquePrices = [];
@@ -111,11 +117,11 @@ function updateDb(todaysPrices) {
         Prices.insertPrice(scrapeTime, uniquePrice.gameTime, uniquePrice.homeTeam, uniquePrice.awayTeam, uniquePrice.price).then(function() {
             pricesUploaded++;
             if(pricesUploaded === uniquePrices.length) {
-		console.log("scrape finished");
+                Logger.logMessage("Updating database finished");
                 Prices.endPool();
             }
         }).catch(function(error) {
-            console.log(error);
+            Logger.logMessage("Error in updating database: " + error);
         });
     }
 }
