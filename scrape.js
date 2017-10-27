@@ -11,6 +11,7 @@ var SEAT_GEEK = "https://seatgeek.com/";
 scrape();
 
 function scrape() {
+    console.log("beginning scrape...");
     validateParameters(process.argv);
     if(!process.argv[2]) {
         console.log("usage: node scrape <seatgeek page>");
@@ -110,6 +111,7 @@ function updateDb(todaysPrices) {
         Prices.insertPrice(scrapeTime, uniquePrice.gameTime, uniquePrice.homeTeam, uniquePrice.awayTeam, uniquePrice.price).then(function() {
             pricesUploaded++;
             if(pricesUploaded === uniquePrices.length) {
+		console.log("scrape finished");
                 Prices.endPool();
             }
         }).catch(function(error) {
