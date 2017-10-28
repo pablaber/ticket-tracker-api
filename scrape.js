@@ -64,19 +64,19 @@ function getTodaysPrices(forUrl) {
                                 if(!awayTeam || !homeTeam) {
                                     var errmsg = "Unable to parse home or away team with titleString: " + titleString;
                                     Logger.logMessage(Logger.ERROR, errmsg);
-                                    throw new Error(errmsg);
                                 }
-                                var price = parseInt($(this).children('.event-listing-button').first().text().trim().substring(6));
-                                var uniqueKey = datetimeString + awayTeam + homeTeam;
-                                var toInsert = {
-                                    uniqueKey: uniqueKey,
-                                    gameTime: gameTime,
-                                    awayTeam: awayTeam,
-                                    homeTeam: homeTeam,
-                                    price: price
-                                };
-                                prices[i].push(toInsert);
-
+                                else {
+                                    var price = parseInt($(this).children('.event-listing-button').first().text().trim().substring(6));
+                                    var uniqueKey = datetimeString + awayTeam + homeTeam;
+                                    var toInsert = {
+                                        uniqueKey: uniqueKey,
+                                        gameTime: gameTime,
+                                        awayTeam: awayTeam,
+                                        homeTeam: homeTeam,
+                                        price: price
+                                    };
+                                    prices[i].push(toInsert);
+                                }
                             });
 
                             scrapedPages++;
@@ -103,8 +103,8 @@ function getTodaysPrices(forUrl) {
 }
 
 function updateDb(todaysPrices) {
-    Logger.logMessage(Logger.INFO, "Updating database");
     var scrapeTime = moment();
+    Logger.logMessage(Logger.INFO, "Updating database for scrapeTime " + scrapeTime.format("YYYY-MM-DD HH:mm:ss"));
     var uniqueKeys = [];
     var uniquePrices = [];
     for(let i in todaysPrices) {
@@ -122,7 +122,7 @@ function updateDb(todaysPrices) {
         Prices.insertPrice(scrapeTime, uniquePrice.gameTime, uniquePrice.homeTeam, uniquePrice.awayTeam, uniquePrice.price).then(function() {
             pricesUploaded++;
             if(pricesUploaded === uniquePrices.length) {
-                Logger.logMessage(Logger.INFO, "Updating database finished");
+                Logger.logMessage(Logger.INFO, "Updating database finished. Entries inserted: " + pricesUploaded);
                 Prices.endPool();
             }
         }).catch(function(error) {
