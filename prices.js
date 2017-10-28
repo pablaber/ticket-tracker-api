@@ -1,6 +1,6 @@
 var moment = require('moment');
 
-require('dotenv').config();
+require('dotenv').config({path: __dirname + "/.env"});
 
 const { Pool, Client } = require('pg');
 

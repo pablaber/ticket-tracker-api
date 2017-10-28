@@ -1,4 +1,4 @@
-module.exports.abbreviations = {
+var abbreviations = {
     "Anaheim Ducks": "ANA",
     "Arizona Coyotes": "ARI",
     "Boston Bruins": "BOS",
@@ -30,4 +30,13 @@ module.exports.abbreviations = {
     "Vegas Golden Knights": "VGK",
     "Washington Capitals": "WSH",
     "Winnipeg Jets": "WPG"
+};
+
+module.exports.getAbbreviation = function(str) {
+    for(var teamName of Object.keys(abbreviations)) {
+        if(str.indexOf(teamName) !== -1) {
+            return abbreviations[teamName];
+        }
+    }
+    return null;
 };

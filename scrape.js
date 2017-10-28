@@ -4,6 +4,7 @@ var moment = require('moment');
 var mongoose = require('mongoose');
 
 var Prices = require('./prices');
+var Logger = require('./logger');
 var Teams = require('./teamAbbreviations');
 
 var SEAT_GEEK = "https://seatgeek.com/";
@@ -11,6 +12,7 @@ var SEAT_GEEK = "https://seatgeek.com/";
 scrape();
 
 function scrape() {
+    Logger.logMessage(Logger.INFO, "Starting scrape");
     validateParameters(process.argv);
     if(!process.argv[2]) {
         console.log("usage: node scrape <seatgeek page>");
@@ -27,6 +29,7 @@ function scrape() {
 }
 
 function getTodaysPrices(forUrl) {
+    Logger.logMessage(Logger.INFO, "Getting prices for url: " + forUrl);
     return new Promise(function(resolve, reject) {
         var todaysPrices = {};
 
@@ -56,33 +59,41 @@ function getTodaysPrices(forUrl) {
                                 var titleString = $(this).children(".event-listing-details").first()
                                     .children(".event-listing-title").first().children().first().text();
                                 var teams = titleString.split(" at ");
-                                var awayTeam = Teams.abbreviations[teams[0].trim()];
-                                var homeTeam = Teams.abbreviations[teams[1].trim()];
-                                var price = parseInt($(this).children('.event-listing-button').first().text().trim().substring(6));
-                                var uniqueKey = datetimeString + awayTeam + homeTeam;
-                                var toInsert = {
-                                    uniqueKey: uniqueKey,
-                                    gameTime: gameTime,
-                                    awayTeam: awayTeam,
-                                    homeTeam: homeTeam,
-                                    price: price
-                                };
-                                prices[i].push(toInsert);
-
+                                var awayTeam = Teams.getAbbreviation(teams[0].trim());
+                                var homeTeam = Teams.getAbbreviation(teams[1].trim());
+                                if(!awayTeam || !homeTeam) {
+                                    var errmsg = "Unable to parse home or away team with titleString: " + titleString;
+                                    Logger.logMessage(Logger.ERROR, errmsg);
+                                }
+                                else {
+                                    var price = parseInt($(this).children('.event-listing-button').first().text().trim().substring(6));
+                                    var uniqueKey = datetimeString + awayTeam + homeTeam;
+                                    var toInsert = {
+                                        uniqueKey: uniqueKey,
+                                        gameTime: gameTime,
+                                        awayTeam: awayTeam,
+                                        homeTeam: homeTeam,
+                                        price: price
+                                    };
+                                    prices[i].push(toInsert);
+                                }
                             });
 
                             scrapedPages++;
                             if(scrapedPages === pages.length) {
+                                Logger.logMessage(Logger.INFO, "Finished getting prices");
                                 resolve(prices);
                             }
                         }
                         else {
+                            Logger.logMessage(Logger.ERROR, "Error in pagination URL");
                             reject("Error in pagination URL");
                         }
                     });
                 }
             }
             else {
+                Logger.logMessage(Logger.ERROR, "Error in input URL");
                 reject("Error in input URL");
             }
         });
@@ -93,6 +104,7 @@ function getTodaysPrices(forUrl) {
 
 function updateDb(todaysPrices) {
     var scrapeTime = moment();
+    Logger.logMessage(Logger.INFO, "Updating database for scrapeTime " + scrapeTime.format("YYYY-MM-DD HH:mm:ss"));
     var uniqueKeys = [];
     var uniquePrices = [];
     for(let i in todaysPrices) {
@@ -110,10 +122,11 @@ function updateDb(todaysPrices) {
         Prices.insertPrice(scrapeTime, uniquePrice.gameTime, uniquePrice.homeTeam, uniquePrice.awayTeam, uniquePrice.price).then(function() {
             pricesUploaded++;
             if(pricesUploaded === uniquePrices.length) {
+                Logger.logMessage(Logger.INFO, "Updating database finished. Entries inserted: " + pricesUploaded);
                 Prices.endPool();
             }
         }).catch(function(error) {
-            console.log(error);
+            Logger.logMessage(Logger.ERROR, "Error in updating database: " + error);
         });
     }
 }
