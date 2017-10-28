@@ -59,8 +59,13 @@ function getTodaysPrices(forUrl) {
                                 var titleString = $(this).children(".event-listing-details").first()
                                     .children(".event-listing-title").first().children().first().text();
                                 var teams = titleString.split(" at ");
-                                var awayTeam = Teams.abbreviations[teams[0].trim()];
-                                var homeTeam = Teams.abbreviations[teams[1].trim()];
+                                var awayTeam = Teams.getAbbreviation(teams[0].trim());
+                                var homeTeam = Teams.getAbbreviation(teams[1].trim());
+                                if(!awayTeam || !homeTeam) {
+                                    var errmsg = "Unable to parse home or away team with titleString: " + titleString;
+                                    Logger.logMessage(Logger.ERROR, errmsg);
+                                    throw new Error(errmsg);
+                                }
                                 var price = parseInt($(this).children('.event-listing-button').first().text().trim().substring(6));
                                 var uniqueKey = datetimeString + awayTeam + homeTeam;
                                 var toInsert = {

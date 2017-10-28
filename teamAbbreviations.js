@@ -1,4 +1,4 @@
-module.exports.abbreviations = {
+var abbreviations = {
     "Anaheim Ducks": "ANA",
     "Arizona Coyotes": "ARI",
     "Boston Bruins": "BOS",
@@ -29,7 +29,14 @@ module.exports.abbreviations = {
     "Vancouver Canucks": "VAN",
     "Vegas Golden Knights": "VGK",
     "Washington Capitals": "WSH",
-    "Winnipeg Jets": "WPG",
-    // TODO: this is hacky, need a better system with indexOf or something
-    "2018 Winter Classic: New York Rangers": "NYR"
+    "Winnipeg Jets": "WPG"
+};
+
+module.exports.getAbbreviation = function(str) {
+    for(var teamName of Object.keys(abbreviations)) {
+        if(str.indexOf(teamName) !== -1) {
+            return abbreviations[teamName];
+        }
+    }
+    return null;
 };
