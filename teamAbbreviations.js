@@ -29,5 +29,7 @@ module.exports.abbreviations = {
     "Vancouver Canucks": "VAN",
     "Vegas Golden Knights": "VGK",
     "Washington Capitals": "WSH",
-    "Winnipeg Jets": "WPG"
+    "Winnipeg Jets": "WPG",
+    // TODO: this is hacky, need a better system with indexOf or something
+    "2018 Winter Classic: New York Rangers": "NYR"
 };

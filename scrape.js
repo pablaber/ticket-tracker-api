@@ -12,7 +12,7 @@ var SEAT_GEEK = "https://seatgeek.com/";
 scrape();
 
 function scrape() {
-    Logger.logMessage("Starting scrape");
+    Logger.logMessage(Logger.INFO, "Starting scrape");
     validateParameters(process.argv);
     if(!process.argv[2]) {
         console.log("usage: node scrape <seatgeek page>");
@@ -29,7 +29,7 @@ function scrape() {
 }
 
 function getTodaysPrices(forUrl) {
-    Logger.logMessage("Getting prices for url: " + forUrl);
+    Logger.logMessage(Logger.INFO, "Getting prices for url: " + forUrl);
     return new Promise(function(resolve, reject) {
         var todaysPrices = {};
 
@@ -76,19 +76,19 @@ function getTodaysPrices(forUrl) {
 
                             scrapedPages++;
                             if(scrapedPages === pages.length) {
-                                Logger.logMessage("Finished getting prices for url: " + forUrl);
+                                Logger.logMessage(Logger.INFO, "Finished getting prices");
                                 resolve(prices);
                             }
                         }
                         else {
-                            Logger.logMessage("Error in pagination URL");
+                            Logger.logMessage(Logger.ERROR, "Error in pagination URL");
                             reject("Error in pagination URL");
                         }
                     });
                 }
             }
             else {
-                Logger.logMessage("Error in input URL");
+                Logger.logMessage(Logger.ERROR, "Error in input URL");
                 reject("Error in input URL");
             }
         });
@@ -98,7 +98,7 @@ function getTodaysPrices(forUrl) {
 }
 
 function updateDb(todaysPrices) {
-    Logger.logMessage("Updating database");
+    Logger.logMessage(Logger.INFO, "Updating database");
     var scrapeTime = moment();
     var uniqueKeys = [];
     var uniquePrices = [];
@@ -117,11 +117,11 @@ function updateDb(todaysPrices) {
         Prices.insertPrice(scrapeTime, uniquePrice.gameTime, uniquePrice.homeTeam, uniquePrice.awayTeam, uniquePrice.price).then(function() {
             pricesUploaded++;
             if(pricesUploaded === uniquePrices.length) {
-                Logger.logMessage("Updating database finished");
+                Logger.logMessage(Logger.INFO, "Updating database finished");
                 Prices.endPool();
             }
         }).catch(function(error) {
-            Logger.logMessage("Error in updating database: " + error);
+            Logger.logMessage(Logger.ERROR, "Error in updating database: " + error);
         });
     }
 }
