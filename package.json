@@ -8,17 +8,18 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/pablaber/ticket-tracker.git"
+    "url": "git+https://github.com/pablaber/ticket-tracker-api.git"
   },
   "author": "Patrick Bacon-Blaber",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/pablaber/ticket-tracker/issues"
+    "url": "https://github.com/pablaber/ticket-tracker-api/issues"
   },
-  "homepage": "https://github.com/pablaber/ticket-tracker#readme",
+  "homepage": "https://github.com/pablaber/ticket-tracker-api#readme",
   "dependencies": {
     "cheerio": "^1.0.0-rc.2",
     "dotenv": "^4.0.0",
+    "express": "^4.16.2",
     "moment": "^2.18.1",
     "mongoose": "^4.11.10",
     "pg": "^7.3.0",

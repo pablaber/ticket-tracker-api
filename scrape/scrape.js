@@ -1,11 +1,10 @@
 var request = require('request');
 var cheerio = require('cheerio');
 var moment = require('moment');
-var mongoose = require('mongoose');
 
 var Prices = require('./prices');
-var Logger = require('./logger');
-var Teams = require('./teamAbbreviations');
+var Logger = require('../util/logger');
+var Teams = require('../util/teamAbbreviations');
 
 var SEAT_GEEK = "https://seatgeek.com/";
 
