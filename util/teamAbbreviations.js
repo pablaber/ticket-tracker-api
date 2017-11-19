@@ -24,6 +24,7 @@ var abbreviations = {
     "Pittsburgh Penguins": "PIT",
     "San Jose Sharks": "SJS",
     "St Louis Blues": "STL",
+    "St. Louis Blues": "STL",
     "Tampa Bay Lightning": "TBL",
     "Toronto Maple Leafs": "TOR",
     "Vancouver Canucks": "VAN",
