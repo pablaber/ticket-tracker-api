@@ -28,11 +28,9 @@ module.exports.pricesForGame = function(gameTime, homeTeam, awayTeam) {
         var params = [gameTime.format("YYYY-MM-DD HH:mm:ss"), homeTeam, awayTeam];
         prices.query(query, params)
             .then(function (res) {
-                prices.end();
                 resolve(res.rows);
             })
             .catch(function (error) {
-                prices.end();
                 reject(error);
             });
     });
@@ -44,11 +42,9 @@ module.exports.pricesForGame = function(gameTime, team) {
         var params = [gameTime.format("YYYY-MM-DD HH:mm:ss"), team];
         prices.query(query, params)
             .then(function (res) {
-                prices.end();
                 resolve(res.rows);
             })
             .catch(function (error) {
-                prices.end();
                 reject(error);
             });
     });
@@ -60,11 +56,9 @@ module.exports.pricesForScrape = function(scrapeTime) {
         var params = [scrapeTime.format("YYYY-MM-DD HH:mm:ss")];
         prices.query(query, params)
             .then(function (res) {
-                prices.end();
                 resolve(res.rows);
             })
             .catch(function (error) {
-                prices.end();
                 reject(error);
             });
     });
@@ -76,11 +70,9 @@ module.exports.currentPricesForTeam = function(team) {
         var params = [team];
         prices.query(query, params)
             .then(function (res) {
-                prices.end();
                 resolve(res.rows);
             })
             .catch(function (error) {
-                prices.end();
                 reject(error);
             });
     });
@@ -92,11 +84,9 @@ module.exports.currentPricesForDay = function (gameTime) {
         var params = [gameTime.format("YYYY-MM-DD HH:mm:ss")];
         prices.query(query, params)
             .then(function (res) {
-                prices.end();
                 resolve(res.rows);
             })
             .catch(function (error) {
-                prices.end();
                 reject(error);
             });
     });
@@ -114,11 +104,9 @@ module.exports.insertPrice = function(scrapeTime, gameTime, homeTeam, awayTeam, 
         ];
         prices.query(query, params)
             .then(function (res) {
-                // prices.end();
                 resolve(res);
             })
             .catch(function (error) {
-                prices.end();
                 reject(error);
             });
 
@@ -128,23 +116,3 @@ module.exports.insertPrice = function(scrapeTime, gameTime, homeTeam, awayTeam, 
 module.exports.endPool = function() {
     prices.end();
 };
-// var gameDate = moment('2017-10-22 12:31:22', "YYYY-MM-DD HH:mm:ss");
-// this.currentPricesForDay(gameDate).then(function(res) {
-//     console.log(res);
-// });
-
-// var gameTime = moment('2017-10-20 19:30:00', "YYYY-MM-DD HH:mm:ss");
-// this.insertPrice(
-//     moment("2017-10-20 12:00:00", "YYYY-MM-DD HH:mm:ss"), gameTime, "STL", "PIT", 200 
-// ).catch(function(error) {
-//     console.log(error);
-// });
-
-// this.getPrices({
-//     // scrapeTime: moment()
-//     // gameTime: moment()
-//     homeTeam: "NYR",
-//     awayTeam: "NYI"
-// }).then(function(res) {
-//     console.log(res);
-// });
