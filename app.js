@@ -1,10 +1,18 @@
 var express = require("express");
 var app = express();
 var moment = require("moment");
+var cors = require("cors");
 
 var Prices = require("./scrape/prices");
 
 require("dotenv").config({ path: __dirname + "/.env" });
+
+var corsOptions = {
+    origin: 'http://localhost:8081',
+    optionsSuccessStatus: 200 // some legacy browsers (IE11, various SmartTVs) choke on 204
+};
+
+app.use(cors(corsOptions));
 
 app.get("/api/prices_for_game", function(req, res) {
     var params = req.query;
